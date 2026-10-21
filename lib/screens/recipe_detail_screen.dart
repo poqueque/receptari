@@ -12,29 +12,51 @@ class RecipeDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Receptari"),
-        backgroundColor: AppStyles.primary,
-        foregroundColor: AppStyles.onPrimary,
-      ),
+      appBar: AppBar(title: Text("Receptari")),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: .start,
           children: [
-            Image.network(
-              "https://i.blogs.es/19c40e/penne/1366_2000.jpg",
-              height: 250,
-              width: .infinity,
-              fit: .cover,
+            Stack(
+              children: [
+                Image.network(
+                  recipe.imageUrl,
+                  height: 250,
+                  width: .infinity,
+                  fit: .cover,
+                ),
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(gradient: AppStyles.imageShade),
+                  ),
+                ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                  child: Text(recipe.title, style: AppStyles.mainTitle),
+                ),
+                Positioned(
+                  left: 16,
+                  top: 16,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppStyles.tagBackground,
+                      borderRadius: .circular(16),
+                    ),
+                    child: Text(recipe.category),
+                  ),
+                ),
+              ],
             ),
             Padding(
               padding: .all(16),
               child: Column(
                 crossAxisAlignment: .start,
                 children: [
-                  Text(recipe.title, style: AppStyles.mainTitle),
                   Row(
-                    mainAxisAlignment: .spaceBetween,
+                    mainAxisAlignment: .spaceEvenly,
                     children: [
                       IconText(
                         icon: Icons.timer_outlined,
@@ -43,17 +65,6 @@ class RecipeDetailScreen extends StatelessWidget {
                       IconText(
                         icon: Icons.people_outline,
                         text: '${recipe.servings} persones',
-                      ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppStyles.tagBackground,
-                          borderRadius: .circular(16),
-                        ),
-                        child: Text(recipe.category),
                       ),
                     ],
                   ),

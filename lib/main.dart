@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-import 'models/recipe.dart';
-import 'screens/recipe_detail_screen.dart';
+import 'package:receptari/screens/recipe_list_screen.dart';
+import 'package:receptari/styles/app_styles.dart';
 
 void main() {
   runApp(const RecipeApp());
@@ -14,8 +13,14 @@ class RecipeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData(fontFamily: GoogleFonts.lexend().fontFamily),
-      home: RecipeDetailScreen(recipe: arrabiata),
+      theme: ThemeData(
+        fontFamily: GoogleFonts.lexend().fontFamily,
+        appBarTheme: AppBarTheme(
+          backgroundColor: AppStyles.primary,
+          foregroundColor: AppStyles.onPrimary,
+        ),
+      ),
+      home: RecipeListScreen(),
     );
   }
 }

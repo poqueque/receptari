@@ -9,6 +9,9 @@ class IconText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [Icon(icon), AppStyles.smallSeparator, Text(text)]);
+    return Row(
+      mainAxisSize: .min,
+      children: [Icon(icon), AppStyles.smallSeparator, Text(text)],
+    );
   }
 }
