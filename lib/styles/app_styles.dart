@@ -13,6 +13,11 @@ class AppStyles {
   );
 
   static final TextStyle cardTitle = TextStyle(fontSize: 16, fontWeight: .bold);
+  static final TextStyle favoriteText = TextStyle(
+    color: AppStyles.primary,
+    fontSize: 16,
+    fontWeight: .bold,
+  );
 
   static final Gradient imageShade = LinearGradient(
     begin: .topCenter,

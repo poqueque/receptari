@@ -4,9 +4,16 @@ import 'package:receptari/styles/app_styles.dart';
 import 'package:receptari/widgets/icon_text.dart';
 
 class RecipeCard extends StatelessWidget {
-  const RecipeCard({super.key, required this.recipe});
+  const RecipeCard({
+    super.key,
+    required this.recipe,
+    required this.isFavorite,
+    required this.onFavoritePressed,
+  });
 
   final Recipe recipe;
+  final bool isFavorite;
+  final Function() onFavoritePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -30,9 +37,20 @@ class RecipeCard extends StatelessWidget {
                 overflow: .ellipsis,
                 style: AppStyles.cardTitle,
               ),
-              IconText(
-                icon: Icons.timer_outlined,
-                text: '${recipe.minutes} min.',
+              Row(
+                mainAxisAlignment: .spaceBetween,
+                children: [
+                  IconText(
+                    icon: Icons.timer_outlined,
+                    text: '${recipe.minutes} min.',
+                  ),
+                  IconButton(
+                    onPressed: onFavoritePressed,
+                    icon: Icon(
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
