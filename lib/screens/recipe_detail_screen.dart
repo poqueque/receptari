@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:receptari/styles/app_styles.dart';
+import 'package:receptari/widgets/cooking_timer.dart';
 import 'package:receptari/widgets/icon_text.dart';
 
 import '../models/recipe.dart';
@@ -68,6 +69,8 @@ class RecipeDetailScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+                  AppStyles.bigSeparator,
+                  CookingTimer(minutes: recipe.minutes),
                   AppStyles.mediumSeparator,
                   Text("Ingredients", style: AppStyles.sectionTitle),
                   AppStyles.smallSeparator,
