@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:receptari/data/sample_recipes.dart';
+import 'package:http/http.dart' as http;
+import 'package:receptari/models/category.dart';
+import 'package:receptari/models/category_list.dart';
 import 'package:receptari/models/recipe.dart';
+import 'package:receptari/models/recipe_list.dart';
 import 'package:receptari/screens/recipe_detail_screen.dart';
 import 'package:receptari/styles/app_styles.dart';
 import 'package:receptari/widgets/recipe_card.dart';
@@ -17,6 +20,10 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
   String query = '';
   TextEditingController searchController = TextEditingController();
   int selectedIndex = 0;
+  List<Recipe> apiRecipes = [];
+  bool isLoading = false;
+  Category? selectedCategory;
+  late Future<List<Category>> categoriesFuture;
 
   void toggleFavorite(Recipe recipe) {
     if (favorites.contains(recipe)) {
@@ -48,6 +55,13 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
     searchController.clear();
     query = '';
     setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadRecipes();
+    categoriesFuture = loadCategories();
   }
 
   @override
@@ -95,15 +109,57 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
     debugPrint("$confirmed");
   }
 
+  Future<void> loadRecipes() async {
+    isLoading = true;
+    setState(() {});
+    try {
+      final http.Response response = await http.get(
+        Uri.parse(
+          "https://xupxup.poquesoft.net/recipes?search=$query&category=${selectedCategory?.id ?? ''}",
+        ),
+      );
+      final RecipeList recipeList = recipeListFromJson(response.body);
+      apiRecipes = recipeList.recipes;
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint(e.toString());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("No s'han pogut carregar les receptes"),
+          action: SnackBarAction(label: "Reintentar", onPressed: loadRecipes),
+        ),
+      );
+    }
+    isLoading = false;
+    setState(() {});
+  }
+
+  Future<List<Category>> loadCategories() async {
+    try {
+      final http.Response response = await http.get(
+        Uri.parse("https://xupxup.poquesoft.net/categories"),
+      );
+      final categoryList = categoryListFromJson(response.body);
+      return categoryList.categories;
+    } catch (e) {
+      if (!mounted) return [];
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("No s'han pogut carregar les categories"),
+          action: SnackBarAction(
+            label: "Reintentar",
+            onPressed: loadCategories,
+          ),
+        ),
+      );
+    }
+    return [];
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<Recipe> filteredRecipes = selectedIndex == 0
-        ? sampleRecipes
-              .where(
-                (element) =>
-                    element.title.toLowerCase().contains(query.toLowerCase()),
-              )
-              .toList()
+        ? apiRecipes.toList()
         : favorites.toList();
 
     return Scaffold(
@@ -134,8 +190,11 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
               padding: const EdgeInsets.all(8),
               child: TextField(
                 controller: searchController,
-                onChanged: (value) {
+                onChanged: (value) async {
                   query = value;
+                },
+                onSubmitted: (value) async {
+                  await loadRecipes();
                   setState(() {});
                 },
                 decoration: InputDecoration(
@@ -150,8 +209,56 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                 ),
               ),
             ),
+
+          SizedBox(
+            height: 48,
+            child: FutureBuilder<List<Category>>(
+              future: categoriesFuture,
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text("No s'han pogut carregar les categories"),
+                  );
+                }
+                if (!snapshot.hasData) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                final categories = snapshot.data!;
+                if (categories.isEmpty) {
+                  return Text("No hi ha categories");
+                }
+                return ListView.builder(
+                  scrollDirection: .horizontal,
+                  itemCount: categories.length,
+                  itemBuilder: (context, index) {
+                    final category = categories[index];
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: ChoiceChip(
+                        selected: selectedCategory == category,
+                        onSelected: (isSelected) async {
+                          if (isSelected) {
+                            selectedCategory = category;
+                          } else {
+                            selectedCategory = null;
+                          }
+                          await loadRecipes();
+                          setState(() {});
+                        },
+                        label: Text(categories[index].name),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+
           Expanded(
-            child: filteredRecipes.isEmpty
+            child: isLoading
+                ? Center(child: CircularProgressIndicator())
+                : filteredRecipes.isEmpty
                 ? Center(child: Text("No s'han trobat receptes"))
                 : GridView.builder(
                     gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
