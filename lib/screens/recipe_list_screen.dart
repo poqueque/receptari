@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:receptari/models/category.dart';
-import 'package:receptari/models/category_list.dart';
 import 'package:receptari/models/recipe.dart';
-import 'package:receptari/models/recipe_list.dart';
 import 'package:receptari/screens/recipe_detail_screen.dart';
+import 'package:receptari/services/recipe_service.dart';
 import 'package:receptari/styles/app_styles.dart';
 import 'package:receptari/widgets/recipe_card.dart';
 
@@ -24,6 +22,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
   bool isLoading = false;
   Category? selectedCategory;
   late Future<List<Category>> categoriesFuture;
+  final recipeService = RecipeService();
 
   void toggleFavorite(Recipe recipe) {
     if (favorites.contains(recipe)) {
@@ -51,9 +50,10 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
     setState(() {});
   }
 
-  void clearSearch() {
+  void clearSearch() async {
     searchController.clear();
     query = '';
+    await loadRecipes();
     setState(() {});
   }
 
@@ -110,19 +110,15 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
   }
 
   Future<void> loadRecipes() async {
+    debugPrint("Buscando $query");
     isLoading = true;
     setState(() {});
     try {
-      final http.Response response = await http.get(
-        Uri.parse(
-          "https://xupxup.poquesoft.net/recipes?search=$query&category=${selectedCategory?.id ?? ''}",
-        ),
-      );
-      final RecipeList recipeList = recipeListFromJson(response.body);
-      apiRecipes = recipeList.recipes;
-    } catch (e) {
+      apiRecipes = await recipeService.getRecipes(query, selectedCategory?.id);
+    } catch (e, stackTrace) {
       if (!mounted) return;
       debugPrint(e.toString());
+      debugPrint(stackTrace.toString());
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("No s'han pogut carregar les receptes"),
@@ -136,11 +132,8 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 
   Future<List<Category>> loadCategories() async {
     try {
-      final http.Response response = await http.get(
-        Uri.parse("https://xupxup.poquesoft.net/categories"),
-      );
-      final categoryList = categoryListFromJson(response.body);
-      return categoryList.categories;
+      debugPrint("Carregant categories...");
+      return await recipeService.getCategories();
     } catch (e) {
       if (!mounted) return [];
       ScaffoldMessenger.of(context).showSnackBar(
@@ -238,11 +231,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                       child: ChoiceChip(
                         selected: selectedCategory == category,
                         onSelected: (isSelected) async {
-                          if (isSelected) {
-                            selectedCategory = category;
-                          } else {
-                            selectedCategory = null;
-                          }
+                          selectedCategory = isSelected ? category : null;
                           await loadRecipes();
                           setState(() {});
                         },
