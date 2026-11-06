@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:receptari/models/recipe_detail.dart';
-import 'package:receptari/services/recipe_service.dart';
+import 'package:receptari/repositories/api_recipe_repository.dart';
+import 'package:receptari/repositories/recipe_repository.dart';
 import 'package:receptari/styles/app_styles.dart';
 import 'package:receptari/widgets/cooking_timer.dart';
 import 'package:receptari/widgets/icon_text.dart';
@@ -18,7 +19,7 @@ class RecipeDetailScreen extends StatefulWidget {
 
 class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   late Future<RecipeDetail> recipeFuture;
-  final recipeService = RecipeService();
+  final RecipeRepository recipeRepository = ApiRecipeRepository();
 
   @override
   void initState() {
@@ -27,7 +28,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   }
 
   Future<RecipeDetail> loadRecipeDetail() async {
-    return recipeService.getRecipe(widget.recipe.id);
+    return recipeRepository.getRecipe(widget.recipe.id);
   }
 
   @override

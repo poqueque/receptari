@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:receptari/screens/recipe_list_screen.dart';
+import 'package:receptari/screens/home_screen.dart';
 import 'package:receptari/styles/app_styles.dart';
 
 void main() {
@@ -29,7 +29,7 @@ class RecipeApp extends StatelessWidget {
           foregroundColor: AppStyles.onPrimary,
         ),
       ),
-      home: RecipeListScreen(),
+      home: HomeScreen(),
     );
   }
 }

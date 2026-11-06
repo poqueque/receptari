@@ -1,54 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:receptari/models/category.dart';
 import 'package:receptari/models/recipe.dart';
+import 'package:receptari/repositories/api_recipe_repository.dart';
+import 'package:receptari/repositories/recipe_repository.dart';
 import 'package:receptari/screens/recipe_detail_screen.dart';
-import 'package:receptari/services/recipe_service.dart';
 import 'package:receptari/styles/app_styles.dart';
+import 'package:receptari/widgets/app_drawer.dart';
 import 'package:receptari/widgets/recipe_card.dart';
 
 class RecipeListScreen extends StatefulWidget {
-  const RecipeListScreen({super.key});
+  const RecipeListScreen({
+    super.key,
+    required this.favorites,
+    required this.onFavoritePressed,
+  });
+
+  final Set<Recipe> favorites;
+  final Function(Recipe recipe) onFavoritePressed;
 
   @override
   State<RecipeListScreen> createState() => _RecipeListScreenState();
 }
 
 class _RecipeListScreenState extends State<RecipeListScreen> {
-  final Set<Recipe> favorites = {};
   String query = '';
   TextEditingController searchController = TextEditingController();
-  int selectedIndex = 0;
   List<Recipe> apiRecipes = [];
   bool isLoading = false;
   Category? selectedCategory;
   late Future<List<Category>> categoriesFuture;
-  final recipeService = RecipeService();
-
-  void toggleFavorite(Recipe recipe) {
-    if (favorites.contains(recipe)) {
-      favorites.remove(recipe);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Has tret ${recipe.title} de "
-            "les favorites",
-          ),
-          persist: false,
-          duration: Duration(seconds: 3),
-          action: SnackBarAction(
-            label: 'Desfer',
-            onPressed: () {
-              favorites.add(recipe);
-              setState(() {});
-            },
-          ),
-        ),
-      );
-    } else {
-      favorites.add(recipe);
-    }
-    setState(() {});
-  }
+  final RecipeRepository recipeRepository = ApiRecipeRepository();
 
   void clearSearch() async {
     searchController.clear();
@@ -70,51 +51,12 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
     super.dispose();
   }
 
-  void openRecipe(Recipe recipe) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => RecipeDetailScreen(recipe: recipe),
-      ),
-    );
-  }
-
-  Future<void> confirmClearFavorites() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text("Treure de favorits"),
-        content: Text("Segur que vols esborrar la recepta de favorits?"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context, false);
-            },
-            child: Text("CANCEL·LAR"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context, true);
-            },
-            child: Text("CONFIRMAR"),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      favorites.clear();
-      setState(() {});
-    }
-    debugPrint("$confirmed");
-  }
-
   Future<void> loadRecipes() async {
     debugPrint("Buscando $query");
     isLoading = true;
     setState(() {});
     try {
-      apiRecipes = await recipeService.getRecipes(query, selectedCategory?.id);
+      apiRecipes = await recipeRepository.getRecipes(query, selectedCategory?.id);
     } catch (e, stackTrace) {
       if (!mounted) return;
       debugPrint(e.toString());
@@ -133,7 +75,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
   Future<List<Category>> loadCategories() async {
     try {
       debugPrint("Carregant categories...");
-      return await recipeService.getCategories();
+      return await recipeRepository.getCategories();
     } catch (e) {
       if (!mounted) return [];
       ScaffoldMessenger.of(context).showSnackBar(
@@ -151,61 +93,92 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Recipe> filteredRecipes = selectedIndex == 0
-        ? apiRecipes.toList()
-        : favorites.toList();
+    final List<Recipe> filteredRecipes = apiRecipes.toList();
 
     return Scaffold(
       appBar: AppBar(
         title: Text("Receptari"),
         actions: [
+          IconButton(
+            onPressed: showFilters,
+            icon: Badge(
+              backgroundColor: AppStyles.onPrimary,
+              textColor: AppStyles.primary,
+              isLabelVisible: selectedCategory != null,
+              child: Icon(Icons.filter_list),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(8),
             child: Stack(
               alignment: .center,
               children: [
                 Icon(Icons.favorite, size: 40),
-                Text('${favorites.length}', style: AppStyles.favoriteText),
+                Text(
+                  '${widget.favorites.length}',
+                  style: AppStyles.favoriteText,
+                ),
               ],
             ),
           ),
-          if (selectedIndex == 1 && favorites.isNotEmpty)
-            IconButton(
-              onPressed: confirmClearFavorites,
-              icon: Icon(Icons.delete),
-            ),
         ],
       ),
+      drawer: AppDrawer(),
       body: Column(
         children: [
-          if (selectedIndex == 0)
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: TextField(
-                controller: searchController,
-                onChanged: (value) async {
-                  query = value;
-                },
-                onSubmitted: (value) async {
-                  await loadRecipes();
-                  setState(() {});
-                },
-                decoration: InputDecoration(
-                  hintText: 'Cerca una recepta',
-                  prefixIcon: Icon(Icons.search),
-                  suffixIcon: query.isEmpty
-                      ? null
-                      : IconButton(
-                          icon: Icon(Icons.close),
-                          onPressed: clearSearch,
-                        ),
-                ),
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: TextField(
+              controller: searchController,
+              onChanged: (value) async {
+                query = value;
+              },
+              onSubmitted: (value) async {
+                await loadRecipes();
+                setState(() {});
+              },
+              decoration: InputDecoration(
+                hintText: 'Cerca una recepta',
+                prefixIcon: Icon(Icons.search),
+                suffixIcon: query.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: Icon(Icons.close),
+                        onPressed: clearSearch,
+                      ),
               ),
             ),
+          ),
 
-          SizedBox(
-            height: 48,
-            child: FutureBuilder<List<Category>>(
+          Expanded(
+            child: isLoading
+                ? Center(child: CircularProgressIndicator())
+                : filteredRecipes.isEmpty
+                ? Center(child: Text("No s'han trobat receptes"))
+                : RecipeGrid(
+                    filteredRecipes: filteredRecipes,
+                    favorites: widget.favorites,
+                    onFavoritePressed: widget.onFavoritePressed,
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void showFilters() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisSize: .min,
+          crossAxisAlignment: .stretch,
+          children: [
+            AppStyles.mediumSeparator,
+            Text("Sel·lecciona una categoria", style: AppStyles.cardTitle),
+
+            FutureBuilder<List<Category>>(
               future: categoriesFuture,
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
@@ -220,70 +193,73 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                 if (categories.isEmpty) {
                   return Text("No hi ha categories");
                 }
-                return ListView.builder(
-                  scrollDirection: .horizontal,
-                  itemCount: categories.length,
-                  itemBuilder: (context, index) {
-                    final category = categories[index];
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: ChoiceChip(
-                        selected: selectedCategory == category,
-                        onSelected: (isSelected) async {
-                          selectedCategory = isSelected ? category : null;
-                          await loadRecipes();
-                          setState(() {});
-                        },
-                        label: Text(categories[index].name),
+                return Wrap(
+                  children: [
+                    for (final category in categories)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: ChoiceChip(
+                          selected: selectedCategory == category,
+                          onSelected: (isSelected) async {
+                            selectedCategory = isSelected ? category : null;
+                            Navigator.pop(context);
+                            await loadRecipes();
+                            setState(() {});
+                          },
+                          label: Text(category.name),
+                        ),
                       ),
-                    );
-                  },
+                  ],
                 );
               },
             ),
-          ),
-
-          Expanded(
-            child: isLoading
-                ? Center(child: CircularProgressIndicator())
-                : filteredRecipes.isEmpty
-                ? Center(child: Text("No s'han trobat receptes"))
-                : GridView.builder(
-                    gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 250,
-                    ),
-                    itemCount: filteredRecipes.length,
-                    itemBuilder: (context, index) {
-                      final recipe = filteredRecipes[index];
-
-                      return RecipeCard(
-                        recipe: recipe,
-                        isFavorite: favorites.contains(recipe),
-                        onFavoritePressed: () => toggleFavorite(recipe),
-                        onTap: () {
-                          openRecipe(recipe);
-                        },
-                      );
-                    },
-                  ),
-          ),
-        ],
+          ],
+        ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: selectedIndex,
-        onDestinationSelected: (value) {
-          selectedIndex = value;
-          setState(() {});
-        },
-        destinations: [
-          NavigationDestination(icon: Icon(Icons.restaurant), label: "Totes"),
-          NavigationDestination(
-            icon: Icon(Icons.favorite_border),
-            label: "Favorites",
-          ),
-        ],
+    );
+  }
+}
+
+class RecipeGrid extends StatelessWidget {
+  const RecipeGrid({
+    super.key,
+    required this.filteredRecipes,
+    required this.favorites,
+    required this.onFavoritePressed,
+  });
+
+  final List<Recipe> filteredRecipes;
+  final Set<Recipe> favorites;
+  final Function(Recipe recipe) onFavoritePressed;
+
+  void openRecipe(BuildContext context, Recipe recipe) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RecipeDetailScreen(recipe: recipe),
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+        maxCrossAxisExtent: 250,
+      ),
+      itemCount: filteredRecipes.length,
+      itemBuilder: (context, index) {
+        final recipe = filteredRecipes[index];
+
+        return RecipeCard(
+          recipe: recipe,
+          isFavorite: favorites.contains(recipe),
+          onFavoritePressed: () => onFavoritePressed(recipe),
+          onTap: () {
+            openRecipe(context, recipe);
+          },
+        );
+      },
     );
   }
 }
