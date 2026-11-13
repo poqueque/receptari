@@ -1,22 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:receptari/models/category.dart';
 import 'package:receptari/models/recipe.dart';
+import 'package:receptari/providers/favorites_provider.dart';
 import 'package:receptari/repositories/api_recipe_repository.dart';
 import 'package:receptari/repositories/recipe_repository.dart';
-import 'package:receptari/screens/recipe_detail_screen.dart';
 import 'package:receptari/styles/app_styles.dart';
 import 'package:receptari/widgets/app_drawer.dart';
-import 'package:receptari/widgets/recipe_card.dart';
+import 'package:receptari/widgets/recipe_grid.dart';
 
 class RecipeListScreen extends StatefulWidget {
-  const RecipeListScreen({
-    super.key,
-    required this.favorites,
-    required this.onFavoritePressed,
-  });
-
-  final Set<Recipe> favorites;
-  final Function(Recipe recipe) onFavoritePressed;
+  const RecipeListScreen({super.key});
 
   @override
   State<RecipeListScreen> createState() => _RecipeListScreenState();
@@ -56,7 +50,10 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
     isLoading = true;
     setState(() {});
     try {
-      apiRecipes = await recipeRepository.getRecipes(query, selectedCategory?.id);
+      apiRecipes = await recipeRepository.getRecipes(
+        query,
+        selectedCategory?.id,
+      );
     } catch (e, stackTrace) {
       if (!mounted) return;
       debugPrint(e.toString());
@@ -94,12 +91,14 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
   @override
   Widget build(BuildContext context) {
     final List<Recipe> filteredRecipes = apiRecipes.toList();
+    final favorites = context.watch<FavoritesProvider>().favorites;
 
     return Scaffold(
       appBar: AppBar(
         title: Text("Receptari"),
         actions: [
           IconButton(
+            tooltip: "Filtrar per categoria",
             onPressed: showFilters,
             icon: Badge(
               backgroundColor: AppStyles.onPrimary,
@@ -108,17 +107,22 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
               child: Icon(Icons.filter_list),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Stack(
-              alignment: .center,
-              children: [
-                Icon(Icons.favorite, size: 40),
-                Text(
-                  '${widget.favorites.length}',
-                  style: AppStyles.favoriteText,
-                ),
-              ],
+          Semantics(
+            label: "Receptes favorites",
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Stack(
+                alignment: .center,
+                children: [
+                  Icon(Icons.favorite, size: 40),
+                  Text(
+                    '${favorites.length}',
+                    style: AppStyles.favoriteText,
+                    textScaler: MediaQuery.textScalerOf(context)
+                        .clamp(maxScaleFactor: 1.3),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -143,6 +147,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                 suffixIcon: query.isEmpty
                     ? null
                     : IconButton(
+                        tooltip: "Esborrar la cerca",
                         icon: Icon(Icons.close),
                         onPressed: clearSearch,
                       ),
@@ -155,11 +160,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                 ? Center(child: CircularProgressIndicator())
                 : filteredRecipes.isEmpty
                 ? Center(child: Text("No s'han trobat receptes"))
-                : RecipeGrid(
-                    filteredRecipes: filteredRecipes,
-                    favorites: widget.favorites,
-                    onFavoritePressed: widget.onFavoritePressed,
-                  ),
+                : RecipeGrid(filteredRecipes: filteredRecipes),
           ),
         ],
       ),
@@ -216,50 +217,6 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class RecipeGrid extends StatelessWidget {
-  const RecipeGrid({
-    super.key,
-    required this.filteredRecipes,
-    required this.favorites,
-    required this.onFavoritePressed,
-  });
-
-  final List<Recipe> filteredRecipes;
-  final Set<Recipe> favorites;
-  final Function(Recipe recipe) onFavoritePressed;
-
-  void openRecipe(BuildContext context, Recipe recipe) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => RecipeDetailScreen(recipe: recipe),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 250,
-      ),
-      itemCount: filteredRecipes.length,
-      itemBuilder: (context, index) {
-        final recipe = filteredRecipes[index];
-
-        return RecipeCard(
-          recipe: recipe,
-          isFavorite: favorites.contains(recipe),
-          onFavoritePressed: () => onFavoritePressed(recipe),
-          onTap: () {
-            openRecipe(context, recipe);
-          },
-        );
-      },
     );
   }
 }

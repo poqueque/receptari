@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:receptari/models/recipe.dart';
+import 'package:provider/provider.dart';
+import 'package:receptari/providers/favorites_provider.dart';
 import 'package:receptari/screens/favorites_screen.dart';
 import 'package:receptari/screens/recipe_list_screen.dart';
 
@@ -13,35 +14,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int selectedIndex = 0;
 
-  final Set<Recipe> favorites = {};
-
-  void toggleFavorite(Recipe recipe) {
-    if (favorites.contains(recipe)) {
-      favorites.remove(recipe);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Has tret ${recipe.title} de "
-            "les favorites",
-          ),
-          persist: false,
-          duration: Duration(seconds: 3),
-          action: SnackBarAction(
-            label: 'Desfer',
-            onPressed: () {
-              favorites.add(recipe);
-              setState(() {});
-            },
-          ),
-        ),
-      );
-    } else {
-      favorites.add(recipe);
-    }
-    setState(() {});
-  }
-
   Future<void> confirmClearFavorites() async {
+    final favoritesProvider = context.read<FavoritesProvider>();
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -65,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     if (confirmed == true) {
-      favorites.clear();
+      favoritesProvider.clear();
       setState(() {});
     }
     debugPrint("$confirmed");
@@ -74,12 +48,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final screens = [
-      RecipeListScreen(onFavoritePressed: toggleFavorite, favorites: favorites),
-      FavoritesScreen(
-        favorites: favorites,
-        onFavoritePressed: toggleFavorite,
-        onClearFavorites: confirmClearFavorites,
-      ),
+      RecipeListScreen(),
+      FavoritesScreen(onClearFavorites: confirmClearFavorites),
     ];
     return PopScope(
       canPop: selectedIndex == 0,

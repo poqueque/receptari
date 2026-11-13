@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:receptari/models/recipe_detail.dart';
+import 'package:receptari/providers/favorites_provider.dart';
 import 'package:receptari/repositories/api_recipe_repository.dart';
 import 'package:receptari/repositories/recipe_repository.dart';
 import 'package:receptari/styles/app_styles.dart';
@@ -33,8 +35,24 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isFavorite = context.watch<FavoritesProvider>().favorites.contains(
+      widget.recipe,
+    );
+
     return Scaffold(
-      appBar: AppBar(title: Text("Receptari")),
+      appBar: AppBar(
+        title: Text("Receptari"),
+        actions: [
+          IconButton(
+            tooltip: isFavorite ? "Treure de favorites" : "Afegir a favorites",
+            onPressed: () {
+              context.read<FavoritesProvider>().toggleFavorite(widget.recipe);
+              setState(() {});
+            },
+            icon: Icon(isFavorite ? Icons.favorite : Icons.favorite_border),
+          ),
+        ],
+      ),
       body: FutureBuilder(
         future: recipeFuture,
         builder: (context, snapshot) {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppStyles {
-  static final Color primary = Colors.deepOrange;
+  static final Color primary = Colors.deepOrange.shade900;
   static final Color onPrimary = Colors.white;
   static final Color tagBackground = Colors.green.shade100;
 
@@ -15,7 +15,7 @@ class AppStyles {
   static final TextStyle cardTitle = TextStyle(fontSize: 16, fontWeight: .bold);
   static final TextStyle favoriteText = TextStyle(
     color: AppStyles.primary,
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: .bold,
   );
 
