@@ -5,6 +5,7 @@ import 'package:receptari/models/recipe.dart';
 import 'package:receptari/providers/favorites_provider.dart';
 import 'package:receptari/repositories/api_recipe_repository.dart';
 import 'package:receptari/repositories/recipe_repository.dart';
+import 'package:receptari/services/preferences.dart';
 import 'package:receptari/styles/app_styles.dart';
 import 'package:receptari/widgets/app_drawer.dart';
 import 'package:receptari/widgets/recipe_grid.dart';
@@ -21,9 +22,10 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
   TextEditingController searchController = TextEditingController();
   List<Recipe> apiRecipes = [];
   bool isLoading = false;
-  Category? selectedCategory;
+  String? selectedCategory;
   late Future<List<Category>> categoriesFuture;
   final RecipeRepository recipeRepository = ApiRecipeRepository();
+  final preferences = Preferences.instance;
 
   void clearSearch() async {
     searchController.clear();
@@ -35,8 +37,9 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
   @override
   void initState() {
     super.initState();
-    loadRecipes();
     categoriesFuture = loadCategories();
+    selectedCategory = preferences.category;
+    loadRecipes();
   }
 
   @override
@@ -52,7 +55,7 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
     try {
       apiRecipes = await recipeRepository.getRecipes(
         query,
-        selectedCategory?.id,
+        selectedCategory,
       );
     } catch (e, stackTrace) {
       if (!mounted) return;
@@ -200,9 +203,10 @@ class _RecipeListScreenState extends State<RecipeListScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: ChoiceChip(
-                          selected: selectedCategory == category,
+                          selected: selectedCategory == category.id,
                           onSelected: (isSelected) async {
-                            selectedCategory = isSelected ? category : null;
+                            selectedCategory = isSelected ? category.id : null;
+                            preferences.category = selectedCategory;
                             Navigator.pop(context);
                             await loadRecipes();
                             setState(() {});

@@ -75,6 +75,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       height: 250,
                       width: .infinity,
                       fit: .cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return SizedBox(
+                          height: 250,
+                          width: .infinity,
+                          child: Icon(Icons.image_not_supported, size: 96),
+                        );
+                      },
                     ),
                     Positioned.fill(
                       child: Container(

@@ -1,3 +1,4 @@
+import 'package:hive_ce/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:receptari/models/category.dart';
 import 'package:receptari/models/category_list.dart';
@@ -8,13 +9,25 @@ import 'package:receptari/repositories/recipe_repository.dart';
 
 class ApiRecipeRepository extends RecipeRepository {
   final baseUrl = 'https://xupxup.poquesoft.net';
+  final cache = Hive.box('cache');
 
   Future<String> getBody(String path) async {
-    final http.Response response = await http.get(Uri.parse('$baseUrl/$path'));
-    if (response.statusCode != 200) {
-      throw Exception('Error ${response.statusCode}');
+    try {
+      final http.Response response = await http.get(
+        Uri.parse('$baseUrl/$path'),
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Error ${response.statusCode}');
+      }
+      cache.put(path, response.body);
+      return response.body;
+    } catch (e) {
+      final body = cache.get(path);
+      if (body == null) {
+        rethrow;
+      }
+      return body;
     }
-    return response.body;
   }
 
   @override

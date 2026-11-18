@@ -18,6 +18,14 @@ class AppStyles {
     fontSize: 20,
     fontWeight: .bold,
   );
+  static final TextStyle smallWhiteText = TextStyle(
+    fontSize: 14,
+    color: onPrimary,
+  );
+  static final TextStyle mediumWhiteText = TextStyle(
+    fontSize: 18,
+    color: onPrimary,
+  );
 
   static final Gradient imageShade = LinearGradient(
     begin: .topCenter,

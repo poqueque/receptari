@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:receptari/providers/favorites_provider.dart';
-import 'package:receptari/screens/home_screen.dart';
+import 'package:receptari/screens/splash_screen.dart';
 import 'package:receptari/styles/app_styles.dart';
 
 void main() {
@@ -36,7 +36,7 @@ class RecipeApp extends StatelessWidget {
           foregroundColor: AppStyles.onPrimary,
         ),
       ),
-      home: HomeScreen(),
+      home: SplashScreen(),
     );
   }
 }
