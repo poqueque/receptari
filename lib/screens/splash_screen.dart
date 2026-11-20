@@ -1,6 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart' hide EmailAuthProvider;
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:receptari/firebase_options.dart';
 import 'package:receptari/providers/favorites_provider.dart';
 import 'package:receptari/screens/home_screen.dart';
 import 'package:receptari/services/preferences.dart';
@@ -53,10 +57,40 @@ class _SplashScreenState extends State<SplashScreen> {
     status = "Carregant favorits...";
     setState(() {});
     context.read<FavoritesProvider>().init();
-    status = "Carregant més dades...";
+    status = "Inicialitzant backend...";
     setState(() {});
-    await Future.delayed(Duration(seconds: 1));
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
     if (!mounted) return;
+    //Miramos si el usario está loginado
+    if (FirebaseAuth.instance.currentUser == null) {
+      //No está autenticado. Vamos al login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SignInScreen(
+            providers: [EmailAuthProvider()],
+            actions: [
+              AuthStateChangeAction<SignedIn>((context, state) {
+                //Navegar a home
+                navigateHome(context);
+              }),
+              AuthStateChangeAction<UserCreated>((context, state) {
+                //Navegar a home
+                navigateHome(context);
+              }),
+            ],
+          ),
+        ),
+      );
+    } else {
+      //Sí está autenticado. Vamos a la Home
+      navigateHome(context);
+    }
+  }
+
+  void navigateHome(BuildContext context) {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => HomeScreen()),

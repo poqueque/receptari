@@ -26,6 +26,7 @@ class AppStyles {
     fontSize: 18,
     color: onPrimary,
   );
+  static TextStyle statusText = TextStyle(fontSize: 14, color: onPrimary);
 
   static final Gradient imageShade = LinearGradient(
     begin: .topCenter,

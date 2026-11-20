@@ -15,6 +15,7 @@ void main() {
       debugPrintThrottled(lines.join('\n'), wrapWidth: wrapWidth);
     };
   }
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(
     ChangeNotifierProvider(
       create: (BuildContext context) => FavoritesProvider(),

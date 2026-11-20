@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "965370027780",
+    "project_id": "receptari-7",
+    "storage_bucket": "receptari-7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:965370027780:android:49ac94171aff464dd2ba51",
+        "android_client_info": {
+          "package_name": "cat.cifovirtual.receptari"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCPcGjHAkUMdRiVEaciMUweE8czxUvdni0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
